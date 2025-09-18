@@ -1,0 +1,103 @@
+from utils import create_vector, transpose, matrix_add, scale_matrix, matrix_multiply, element_multiply_matrix, element_multiply_vector, dot_product, identity, dims
+import random
+
+class Layer:
+
+    def __init__(self):
+        self.input = None
+        self.pL_pIn = None
+
+    def forward(self, input):
+        raise NotImplementedError
+
+    def backward(self, pL_pOut):
+        raise NotImplementedError
+    
+    def init_params(self):
+        pass
+
+    def update_params(self, learning_rate):
+        pass
+
+    def __str__(self):
+        raise NotImplementedError
+    
+
+class FullyConnected(Layer):
+
+    def __init__(self, input_dim, output_dim):
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.input = None
+        self.weights = None
+        self.biases = None
+        self.pL_pW = None
+        self.pL_pB = None
+        self.pL_pIn = None
+
+    def forward(self, input):
+        self.input = input
+        Wt_input = matrix_multiply(transpose(self.weights), input)
+        output = matrix_add(Wt_input, self.biases)
+        return output 
+
+    def init_params(self):
+        self.weights = [[random.random() for _ in range(self.output_dim)] for _ in range(self.input_dim)]
+        self.biases = [[random.random()] for _ in range(self.output_dim)]
+
+    def backward(self, pL_pOut):
+        pOut_pW = transpose([[val for row in self.input for val in row] for _ in range(self.output_dim)])
+        pOut_pB = create_vector([1] * self.output_dim)
+        pOut_pIn = self.weights
+        self.pL_pW = element_multiply_matrix(pOut_pW, pL_pOut)
+        self.pL_pB = element_multiply_vector(pOut_pB, pL_pOut)
+        self.pL_pIn = matrix_multiply(pOut_pIn, pL_pOut)
+
+    def update_params(self, learning_rate):
+        negative_weights_gradient = scale_matrix(-1, self.pL_pW)
+        self.weights = matrix_add(self.weights, scale_matrix(learning_rate, negative_weights_gradient))
+
+        negative_biases_gradient = scale_matrix(-1, self.pL_pB)
+        self.biases = matrix_add(self.biases, scale_matrix(learning_rate, negative_biases_gradient))
+
+    def __str__(self):
+        if self.weights is None or self.biases is None:
+            return "Weights and biases not initialized."
+
+        input_dim = len(self.weights)
+        output_dim = len(self.weights[0])
+        col_width = 10  # space for each number
+
+        output = ""
+
+        # Weight rows
+        for i in range(input_dim):
+            output += "       ".ljust(col_width) if i else "Weights".ljust(col_width)
+            # output += "Weights".ljust(col_width)
+            for j in range(output_dim):
+                output += f"{self.weights[i][j]:.2f}".ljust(col_width)
+            output += "\n"
+
+        # Bias row
+        output += "Bias".ljust(col_width)
+        for j in range(output_dim):
+            bias_val = self.biases[j][0] if isinstance(self.biases[j], list) else self.biases[j]
+            output += f"{bias_val:.2f}".ljust(col_width)
+        output += "\n"
+
+        return output
+
+class ReLU(Layer):
+
+    def forward(self, input):
+        self.input = input
+        return [[max(0, x) for x in row] for row in input]
+
+    def backward(self, pL_pOut):
+        pOut_pIn = [[1 if x > 0 else 0 for x in row] for row in self.input]
+        self.pL_pIn = element_multiply_vector(pOut_pIn, pL_pOut)
+
+    def __str__(self):
+        return "ReLU()"
+
+

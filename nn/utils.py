@@ -1,6 +1,30 @@
 class DimensionError(Exception):
     pass
 
+class Matrix:
+    pass
+
+class Vector:
+    pass
+
+def create_vector(values):
+    return [[v] for v in values]
+
+def transpose(matrix):
+    return [list(row) for row in zip(*matrix)]
+
+def scale_matrix(mag, A):
+    return [[mag * val for val in row] for row in A]
+
+def matrix_add(A, B):
+    output = []
+    for rowA, rowB in zip(A, B):
+        new_row = []
+        for valA, valB in zip(rowA, rowB):
+            new_row.append(valA + valB)
+        output.append(new_row)
+    return output
+
 def matrix_multiply(A: list[list[int]], B: list[list[int]]):
     if len(A[0]) != len(B):
         raise DimensionError(f"Matrices of dimension {(len(A), len(A[0]))} and {(len(B), len(B[0]))} cannot be multiplied.")
@@ -13,19 +37,33 @@ def matrix_multiply(A: list[list[int]], B: list[list[int]]):
         C.append(new_row)
     return C
 
-def element_multiply(A: list[list[int]], B: list[list[int]]):
+def element_multiply_matrix(A: list[list[int]], B: list[list[int]]):
     dims_A, dims_B = dims(A), dims(B)
 
-    assert dims_A[0] == 1
+    assert dims_B[1] == 1
     assert dims_A[1] == dims_B[0]
 
     output = []
-
     for col in zip(*A):
         for row in B:
-            mag = col[0]
-            output.append(scale(mag, row))
-    return output
+            mag = row[0]
+            output.append(scale(mag, col))
+    return transpose(output)
+
+def apply_func_matrix(func, A):
+    return [[func(val) for val in row] for row in A]
+
+def element_multiply_vector(a, b):
+    dims_a, dims_b = dims(a), dims(b)
+
+    assert dims_a[1] == 1
+    assert dims_b[1] == 1
+    output = []
+
+    for rowa, rowb in zip(a, b):
+        output.append(rowa[0] * rowb[0])
+
+    return create_vector(output)
 
 def dot_product(a, b):
     if len(a) != len(b):
