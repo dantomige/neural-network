@@ -1,3 +1,4 @@
+from loss_functions import MSE
 from utils import matrix_multiply, element_multiply, dot_product, identity, dims
 import random
 class Percepton:
@@ -12,8 +13,8 @@ class Percepton:
         self.bias = random.random()
 
     def update_parameters(self, weights_grad, bias_grad, learning_rate):
-        self.weights = [weight + grad * learning_rate for weight, grad in zip(self.weights, weights_grad)]
-        self.bias = self.bias + bias_grad[0] * learning_rate
+        self.weights = [weight - grad * learning_rate for weight, grad in zip(self.weights, weights_grad)]
+        self.bias = self.bias - bias_grad[0] * learning_rate
 
     def forward(self, input):
         output = dot_product(self.weights, input) + self.bias
@@ -56,10 +57,10 @@ class NeuralNetwork:
         
         return output
     
-    def backward(self, input, expected_output): # for each layer calculate pOut/pW (input X output dim, inputs stacked), pOut/pIn (input x output dim, weights matrix), pL/pB (1 x output dim, all ones vector)
+    def backward(self, input, expected_output, loss_function): # for each layer calculate pOut/pW (input X output dim, inputs stacked), pOut/pIn (input x output dim, weights matrix), pL/pB (1 x output dim, all ones vector)
         
         backprop = []
-        pL_pOut = identity(len(expected_output))
+        pL_pOut = loss_function.backward()
         for index in reversed(range(len(self.layers))):
             pOut_pW = []
             pOut_pB = []
@@ -83,9 +84,6 @@ class NeuralNetwork:
                     "pL/pB": element_multiply(pL_pOut, pOut_pB)
                     }
                 )
-            
-            # print("dims", dims(pL_pOut), dims(pOut_pW), dims(matrix_multiply(pL_pOut, pOut_pW)))
-            # print("dims",dims(pL_pOut), dims(pOut_pB), dims(matrix_multiply(pL_pOut, pOut_pB)))
 
             pL_pOut = matrix_multiply(pL_pOut, pOut_pIn)
 
@@ -98,12 +96,15 @@ class NeuralNetwork:
             layer_pL_pB = grads["pL/pB"]
 
             for perceptron, weights_grad, bias_grad in zip(layer, layer_pL_pW, layer_pL_pB):
-                # print("before", perceptron.weights, perceptron.bias)
                 perceptron.update_parameters(weights_grad, bias_grad, learning_rate)
-                # print("after", perceptron.weights, perceptron.bias)
 
-    def train(self, inputs, outputs, learning_rate, loss_function):
-        pass
+    def train(self, inputs, outputs, learning_rate, loss_function: MSE):
+        
+        for input, output in zip(inputs, outputs):
+            model_output = self.forward(input)
+            loss_function.loss(model_output, output)
+            self.backward(input, output, loss_function)
+            self.update_parameters(learning_rate)
     
     def __str__(self):     
         output = ""
@@ -117,12 +118,36 @@ class NeuralNetwork:
             
 
 if __name__ == "__main__":
-    nn = NeuralNetwork(layer_dims=[2, 3, 2, 1])
+    # nn = NeuralNetwork(layer_dims=[2, 3, 2, 1])
+    # nn.initalize_params()
+    # input = [1, 0]
+    # expected_output = [1]
+    # output = nn.forward(input)
+    # nn.backward(input, expected_output)
+    # nn.update_parameters(learning_rate=0.2)
+
+    nn = NeuralNetwork(layer_dims=[2, 3, 1])
     nn.initalize_params()
-    input = [1, 0]
-    expected_output = [1]
-    output = nn.forward(input)
-    nn.backward(input, expected_output)
-    nn.update_parameters(learning_rate=0.2)
+
+    num_points = 1000
+    m1, m2, b = -1, 0.5, 1
+
+    inputs, outputs = [], []
+
+    for _ in range(num_points):
+        input = [random.uniform(-0.5, 0.5), random.uniform(-0.5, 0.5)]
+        x1, x2 = input
+        output = m1 * x1 + m2 * x2 + b
+        inputs.append(input)
+        outputs.append([output])
+
+    loss_function = MSE()
+    
+    # print(inputs, outputs)
+    nn.train(inputs, outputs, learning_rate=0.1, loss_function=loss_function)
+
+    print(nn.forward([1, 3])) # expect around 1.5
+    print(nn.forward([1, 2])) # expect around 1
+    print(nn.forward([2, 2])) # expect around 0
 
 
