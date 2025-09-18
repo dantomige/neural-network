@@ -8,6 +8,7 @@ class Layer:
     def __init__(self):
         self.input = None
         self.pL_pIn = None
+        self.is_trainable = False
 
     def forward(self, input, training=True):
         raise NotImplementedError
@@ -23,13 +24,12 @@ class Layer:
 
     def __str__(self):
         raise NotImplementedError
-    
-
 class FullyConnected(Layer):
 
     def __init__(self, input_dim, output_dim):
         self.input_dim = input_dim
         self.output_dim = output_dim
+        self.is_trainable = True
         self.input = None
         self.weights = None
         self.biases = None
@@ -47,8 +47,8 @@ class FullyConnected(Layer):
         self.weights = [[random.uniform(-0.2, 0.2) for _ in range(self.output_dim)] for _ in range(self.input_dim)]
         self.biases = [[random.uniform(-0.2, 0.2)] for _ in range(self.output_dim)]
 
-    def backward(self, pL_pOut):
-        pOut_pW = transpose([[val for row in self.input for val in row] for _ in range(self.output_dim)])
+    def backward(self, pL_pOut, weight_decay):
+        pOut_pW = matrix_add(transpose([[val for row in self.input for val in row] for _ in range(self.output_dim)]), scale_matrix(2 * weight_decay, self.weights))
         pOut_pB = create_vector([1] * self.output_dim)
         pOut_pIn = self.weights
         self.pL_pW = element_multiply_matrix(pOut_pW, pL_pOut)
@@ -93,10 +93,9 @@ class FullyConnected(Layer):
 class Dropout(Layer):
 
     def __init__(self, dropout_prob=0.2):
+        super().__init__()
         self.dropout_prob = dropout_prob
-        self.input = None
         self.mask = None
-        self.pL_pIn = None
 
     def forward(self, input, training=True):
         self.input = input
@@ -126,6 +125,9 @@ class Dropout(Layer):
 
 class ReLU(Layer):
 
+    def __init__(self):
+        super().__init__()
+
     def forward(self, input, training=True):
         self.input = input
         return [[max(0, x) for x in row] for row in input]
@@ -139,6 +141,9 @@ class ReLU(Layer):
         return "ReLU()\n"
     
 class Sigmoid(Layer):
+
+    def __init__(self):
+        super().__init__()
 
     def forward(self, input, training=True):
         self.input = input
