@@ -1,5 +1,6 @@
 from utils import create_vector, transpose, matrix_add, scale_matrix, matrix_multiply, element_multiply_matrix, element_multiply_vector, apply_func_matrix, dims
 from functions import sigmoid, sigmoid_deriv
+from initialization import Initializations, HeKaiming, RandomNormal, RandomUniform
 import random
 import math
 
@@ -16,7 +17,7 @@ class Layer:
     def backward(self, pL_pOut):
         raise NotImplementedError
     
-    def init_params(self):
+    def init_params(self, init: Initializations=None):
         pass
 
     def update_params(self, learning_rate):
@@ -26,9 +27,10 @@ class Layer:
         raise NotImplementedError
 class FullyConnected(Layer):
 
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, input_dim, output_dim, init=HeKaiming()):
         self.input_dim = input_dim
         self.output_dim = output_dim
+        self.init = init
         self.is_trainable = True
         self.input = None
         self.weights = None
@@ -44,8 +46,8 @@ class FullyConnected(Layer):
         return output 
 
     def init_params(self):
-        self.weights = [[random.uniform(-0.2, 0.2) for _ in range(self.output_dim)] for _ in range(self.input_dim)]
-        self.biases = [[random.uniform(-0.2, 0.2)] for _ in range(self.output_dim)]
+        self.weights = self.init.init_weights(self.input_dim, self.output_dim)
+        self.biases = [[0] for _ in range(self.output_dim)]
 
     def backward(self, pL_pOut, weight_decay):
         pOut_pW = matrix_add(transpose([[val for row in self.input for val in row] for _ in range(self.output_dim)]), scale_matrix(2 * weight_decay, self.weights))
