@@ -1,5 +1,5 @@
 from loss_functions import MSE, LogLinear
-from layers import Layer, FullyConnected, ReLU, Sigmoid
+from layers import Layer, FullyConnected, Dropout, ReLU, Sigmoid
 from utils import create_vector
 import random
 
@@ -14,9 +14,9 @@ class NeuralNetwork:
         for layer in self.layers:
             layer.init_params()
 
-    def forward(self, input):
+    def forward(self, input, training=True):
         for layer in self.layers:
-            output = layer.forward(input)
+            output = layer.forward(input, training)
             input = output
         return output
     
@@ -67,6 +67,7 @@ if __name__ == "__main__":
 
     nn = NeuralNetwork([
         FullyConnected(2, 7),
+        Dropout(0.25),
         ReLU(),
         FullyConnected(7, 1),
         Sigmoid()
@@ -77,9 +78,9 @@ if __name__ == "__main__":
     print("Before")
     print(nn)
 
-    print(nn.forward(create_vector([1, 3])), [1 if (m1 * 1 + m2 * 3 + b) ** 2 > 2 else 0])
-    print(nn.forward(create_vector([1, 2])), [1 if (m1 * 1 + m2 * 2 + b) ** 2 > 2 else 0])
-    print(nn.forward(create_vector([2, 2])), [1 if (m1 * 2 + m2 * 2 + b) ** 2 > 2 else 0])
+    print(nn.forward(create_vector([1, 3]), training=False), [1 if (m1 * 1 + m2 * 3 + b) ** 2 > 2 else 0])
+    print(nn.forward(create_vector([1, 2]), training=False), [1 if (m1 * 1 + m2 * 2 + b) ** 2 > 2 else 0])
+    print(nn.forward(create_vector([2, 2]), training=False), [1 if (m1 * 2 + m2 * 2 + b) ** 2 > 2 else 0])
     print("")
     
     nn.train(inputs, outputs, learning_rate=0.05, loss_function=loss_function)
@@ -87,8 +88,8 @@ if __name__ == "__main__":
     print("After")
     print(nn)
 
-    print(nn.forward(create_vector([1, 3])), [1 if (m1 * 1 + m2 * 3 + b) ** 2 > 2 else 0])
-    print(nn.forward(create_vector([1, 2])), [1 if (m1 * 1 + m2 * 2 + b) ** 2 > 2 else 0])
-    print(nn.forward(create_vector([2, 2])), [1 if (m1 * 2 + m2 * 2 + b) ** 2 > 2 else 0])
+    print(nn.forward(create_vector([1, 3]), training=False), [1 if (m1 * 1 + m2 * 3 + b) ** 2 > 2 else 0])
+    print(nn.forward(create_vector([1, 2]), training=False), [1 if (m1 * 1 + m2 * 2 + b) ** 2 > 2 else 0])
+    print(nn.forward(create_vector([2, 2]), training=False), [1 if (m1 * 2 + m2 * 2 + b) ** 2 > 2 else 0])
 
 

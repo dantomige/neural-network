@@ -1,4 +1,4 @@
-from utils import create_vector, transpose, matrix_add, scale_matrix, matrix_multiply, element_multiply_matrix, element_multiply_vector, apply_func_matrix
+from utils import create_vector, transpose, matrix_add, scale_matrix, matrix_multiply, element_multiply_matrix, element_multiply_vector, apply_func_matrix, dims
 from functions import sigmoid, sigmoid_deriv
 import random
 import math
@@ -9,7 +9,7 @@ class Layer:
         self.input = None
         self.pL_pIn = None
 
-    def forward(self, input):
+    def forward(self, input, training=True):
         raise NotImplementedError
 
     def backward(self, pL_pOut):
@@ -37,7 +37,7 @@ class FullyConnected(Layer):
         self.pL_pB = None
         self.pL_pIn = None
 
-    def forward(self, input):
+    def forward(self, input, training=True):
         self.input = input
         Wt_input = matrix_multiply(transpose(self.weights), input)
         output = matrix_add(Wt_input, self.biases)
@@ -89,10 +89,44 @@ class FullyConnected(Layer):
         output += "\n"
 
         return output
+    
+class Dropout(Layer):
+
+    def __init__(self, dropout_prob=0.2):
+        self.dropout_prob = dropout_prob
+        self.input = None
+        self.mask = None
+        self.pL_pIn = None
+
+    def forward(self, input, training=True):
+        self.input = input
+        if training:
+            self.mask = create_vector([0 if random.random() < self.dropout_prob else 1 for _ in range(len(self.input))])
+
+            assert dims(self.input) == dims(self.mask)
+
+            masked_input = element_multiply_vector(self.mask, self.input)
+            output = scale_matrix(1/(1-self.dropout_prob), masked_input)
+            return output 
+        else:
+            self.mask = None
+            return self.input
+
+    def backward(self, pL_pOut):
+        if self.mask is not None:
+            masked_deriv = element_multiply_vector(self.mask, pL_pOut)
+            self.pL_pIn = scale_matrix(1/(1-self.dropout_prob), masked_deriv)
+            return self.pL_pIn
+        else:
+            self.pL_pIn = pL_pOut
+            return self.pL_pIn
+
+    def __str__(self):
+        return f"Dropout(prob={self.dropout_prob})\n"
 
 class ReLU(Layer):
 
-    def forward(self, input):
+    def forward(self, input, training=True):
         self.input = input
         return [[max(0, x) for x in row] for row in input]
 
@@ -106,7 +140,7 @@ class ReLU(Layer):
     
 class Sigmoid(Layer):
 
-    def forward(self, input):
+    def forward(self, input, training=True):
         self.input = input
         output = apply_func_matrix(lambda x: sigmoid(x), input)
         return output
