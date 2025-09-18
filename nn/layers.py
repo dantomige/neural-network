@@ -1,5 +1,7 @@
-from utils import create_vector, transpose, matrix_add, scale_matrix, matrix_multiply, element_multiply_matrix, element_multiply_vector, dot_product, identity, dims
+from utils import create_vector, transpose, matrix_add, scale_matrix, matrix_multiply, element_multiply_matrix, element_multiply_vector, apply_func_matrix
+from functions import sigmoid, sigmoid_deriv
 import random
+import math
 
 class Layer:
 
@@ -42,8 +44,8 @@ class FullyConnected(Layer):
         return output 
 
     def init_params(self):
-        self.weights = [[random.random() for _ in range(self.output_dim)] for _ in range(self.input_dim)]
-        self.biases = [[random.random()] for _ in range(self.output_dim)]
+        self.weights = [[random.uniform(-0.2, 0.2) for _ in range(self.output_dim)] for _ in range(self.input_dim)]
+        self.biases = [[random.uniform(-0.2, 0.2)] for _ in range(self.output_dim)]
 
     def backward(self, pL_pOut):
         pOut_pW = transpose([[val for row in self.input for val in row] for _ in range(self.output_dim)])
@@ -52,6 +54,7 @@ class FullyConnected(Layer):
         self.pL_pW = element_multiply_matrix(pOut_pW, pL_pOut)
         self.pL_pB = element_multiply_vector(pOut_pB, pL_pOut)
         self.pL_pIn = matrix_multiply(pOut_pIn, pL_pOut)
+        return self.pL_pIn
 
     def update_params(self, learning_rate):
         negative_weights_gradient = scale_matrix(-1, self.pL_pW)
@@ -96,8 +99,23 @@ class ReLU(Layer):
     def backward(self, pL_pOut):
         pOut_pIn = [[1 if x > 0 else 0 for x in row] for row in self.input]
         self.pL_pIn = element_multiply_vector(pOut_pIn, pL_pOut)
+        return self.pL_pIn
 
     def __str__(self):
-        return "ReLU()"
+        return "ReLU()\n"
+    
+class Sigmoid(Layer):
 
+    def forward(self, input):
+        self.input = input
+        output = apply_func_matrix(lambda x: sigmoid(x), input)
+        return output
+
+    def backward(self, pL_pOut):
+        pOut_pIn = apply_func_matrix(lambda x: sigmoid_deriv(x), self.input)
+        self.pL_pIn = element_multiply_vector(pOut_pIn, pL_pOut)
+        return self.pL_pIn
+
+    def __str__(self):
+        return "Sigmoid()\n"
 
