@@ -1,4 +1,4 @@
-from utils import create_vector, transpose, matrix_add, scale_matrix, matrix_multiply, element_multiply_matrix, element_multiply_vector, apply_func_matrix, dims
+from utils import create_vector, transpose, matrix_add, scale_matrix, matrix_multiply, element_multiply_matrix, element_multiply_vector, broadcast, apply_func_matrix, dims
 from functions import sigmoid, sigmoid_deriv
 from initialization import Initializations, HeKaiming, RandomNormal, RandomUniform
 from optimizer import Optimizer, SGD, Adam, RMSProp
@@ -43,13 +43,13 @@ class FullyConnected(Layer):
 
     def forward(self, input, training=True):
         self.input = input
-        Wt_input = matrix_multiply(transpose(self.weights), input)
-        output = matrix_add(Wt_input, self.biases)
+        Wt_input = matrix_multiply(input, transpose(self.weights))
+        output = broadcast(self.biases, Wt_input)
         return output 
 
     def init_params(self):
         self.weights = self.init.init_weights(self.input_dim, self.output_dim)
-        self.biases = [[0] for _ in range(self.output_dim)]
+        self.biases = [[0 for _ in range(self.output_dim)]]
 
     def backward(self, pL_pOut):
         pOut_pW = matrix_add(transpose([[val for row in self.input for val in row] for _ in range(self.output_dim)]), self.weights)

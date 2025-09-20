@@ -24,7 +24,7 @@ class NeuralNetwork:
             input = output
         return output
     
-    def backward(self, input, model_output, expected_output, loss_function): 
+    def backward(self, input, model_output, expected_output, loss_function: LossFunction): 
         
         _ = loss_function.loss(model_output, expected_output)
         pL_pOut = loss_function.backward()

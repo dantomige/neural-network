@@ -65,6 +65,20 @@ def apply_func_between_matrix_elementwise(func, A, B):
         C.append(new_row)
     return C
 
+def broadcast(a, A):
+    """ Brodcasts a onto A. *Only a vector onto a matrix."""
+    dimsa = dims(a)
+    dimsA = dims(A)
+
+    assert dimsa[0] == 1
+    assert dimsa[1] == dimsA[1]
+
+    newA = []
+    arow = a[0]
+    for row in A:
+        newA.append([aval + Aval for aval, Aval in zip(arow, row)])
+    return newA
+
 def element_multiply_vector(a, b):
     dims_a, dims_b = dims(a), dims(b)
 

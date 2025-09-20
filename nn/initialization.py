@@ -5,7 +5,7 @@ import math
 class Initializations:
 
     def init_weights(self, input_dim, output_dim):
-        return [[self.generate_weight(input_dim) for _ in range(output_dim)] for _ in range(input_dim)]
+        return [[self.generate_weight(input_dim) for _ in range(input_dim)] for _ in range(output_dim)]
 
     def generate_weight(self):
         raise NotImplementedError
