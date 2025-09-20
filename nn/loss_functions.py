@@ -67,3 +67,6 @@ class LogLinear:
         frac = element_multiply_vector(num, apply_func_matrix(lambda x: 1/x, denom))
         pL_pIn = scale_matrix(1/num_dims, frac)
         return pL_pIn
+    
+class CrossEntropyLoss:
+    pass
