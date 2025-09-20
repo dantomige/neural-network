@@ -10,6 +10,9 @@ class Vector:
 def create_vector(values):
     return [[v] for v in values]
 
+def create_matrix(row_dim, col_dim, val=0):
+    return [[val for _ in range(col_dim)] for _ in range(row_dim)]
+
 def transpose(matrix):
     return [list(row) for row in zip(*matrix)]
 
@@ -52,6 +55,15 @@ def element_multiply_matrix(A: list[list[int]], B: list[list[int]]):
 
 def apply_func_matrix(func, A):
     return [[func(val) for val in row] for row in A]
+
+def apply_func_between_matrix_elementwise(func, A, B):
+    C = []
+    for rowA, rowB in zip(A, B):
+        new_row = []
+        for vala, valb in zip(rowA, rowB):
+            new_row.append(func(vala, valb))
+        C.append(new_row)
+    return C
 
 def element_multiply_vector(a, b):
     dims_a, dims_b = dims(a), dims(b)
