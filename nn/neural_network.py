@@ -18,15 +18,15 @@ class NeuralNetwork:
         for layer in self.layers:
             layer.init_params()
 
-    def forward(self, input, training=True):
+    def forward(self, X, training=True):
         for layer in self.layers:
-            output = layer.forward(input, training)
-            input = output
+            output = layer.forward(X, training)
+            X = output
         return output
     
-    def backward(self, input, model_output, expected_output, loss_function: LossFunction): 
+    def backward(self, X, Y, Yhat, loss_function: LossFunction): 
         
-        _ = loss_function.loss(model_output, expected_output)
+        _ = loss_function.loss(Y, Yhat)
         pL_pOut = loss_function.backward()
 
         for layer in reversed(self.layers):

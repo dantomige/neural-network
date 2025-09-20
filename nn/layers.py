@@ -1,4 +1,4 @@
-from utils import create_vector, transpose, matrix_add, scale_matrix, matrix_multiply, element_multiply_matrix, element_multiply_vector, broadcast, apply_func_matrix, dims
+from utils import create_vector, create_matrix, transpose, matrix_add, scale_matrix, matrix_multiply, element_multiply_matrix, element_multiply_vector, broadcast, apply_func_matrix, dims
 from functions import sigmoid, sigmoid_deriv
 from initialization import Initializations, HeKaiming, RandomNormal, RandomUniform
 from optimizer import Optimizer, SGD, Adam, RMSProp
@@ -34,17 +34,17 @@ class FullyConnected(Layer):
         self.output_dim = output_dim
         self.init = init
         self.is_trainable = True
-        self.input = None
+        self.inputs = None
         self.weights = None
         self.biases = None
         self.pL_pW = None
         self.pL_pB = None
         self.pL_pIn = None
 
-    def forward(self, input, training=True):
-        self.input = input
-        Wt_input = matrix_multiply(input, transpose(self.weights))
-        output = broadcast(self.biases, Wt_input)
+    def forward(self, X, training=True):
+        self.inputs = X
+        Wt_X = matrix_multiply(input, transpose(self.weights))
+        output = broadcast(self.biases, Wt_X, func=lambda a, b: a + b)
         return output 
 
     def init_params(self):
@@ -52,12 +52,19 @@ class FullyConnected(Layer):
         self.biases = [[0 for _ in range(self.output_dim)]]
 
     def backward(self, pL_pOut):
-        pOut_pW = matrix_add(transpose([[val for row in self.input for val in row] for _ in range(self.output_dim)]), self.weights)
-        pOut_pB = create_vector([1] * self.output_dim)
+        pOut_pW = create_matrix(*dims(self.weights), 0)
+        for x in self.inputs:
+            pOut_pWx = [x for _ in range(self.output_dim)]
+            pOut_pW = matrix_add(pOut_pW, pOut_pWx)
+        pOut_pW = scale_matrix(1/len(self.inputs), pOut_pW)
+        pOut_pB = create_matrix(*dims(self.biases), 1)
         pOut_pIn = self.weights
-        self.pL_pW = element_multiply_matrix(pOut_pW, pL_pOut)
-        self.pL_pB = element_multiply_vector(pOut_pB, pL_pOut)
-        self.pL_pIn = matrix_multiply(pOut_pIn, pL_pOut)
+
+        mult = lambda a,b: a * b
+
+        self.pL_pW = broadcast(pL_pOut, pOut_pW, func=mult)
+        self.pL_pB = broadcast(pL_pOut, pOut_pB, func=mult)
+        self.pL_pIn = matrix_multiply(pL_pOut, pOut_pIn)
         return self.pL_pIn
 
     def update_params(self, optimizer: Optimizer):

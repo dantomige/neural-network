@@ -1,24 +1,36 @@
-from utils import apply_func_matrix, element_multiply_vector, matrix_add, scale_matrix, dims, create_vector
+from utils import apply_func_matrix, element_multiply_vector, matrix_add, scale_matrix, dims, create_matrix
 from functions import log
 
 class LossFunction:
     def __init__(self):
         pass
 
+    def loss(self, output, input):
+        raise NotImplementedError
+
+    def backward(self):
+        raise NotImplementedError
+
 
 class MSE:
     def __init__(self):
-        self.output = None
-        self.expected_output = None
+        self.Yhat = None
+        self.Y = None
 
-    def loss(self, output, expected_output):
-        assert dims(output) == dims(expected_output)
-        error_vector = matrix_add(output, scale_matrix(-1, expected_output))
+    def loss(self, Y, Yhat):
+        assert dims(Yhat) == dims(Y)
+
+        M, N = dims(Yhat)
+        num_elts = M * N
+
+        error_vector = matrix_add(Yhat, scale_matrix(-1, Y))
         square_error_vector = apply_func_matrix(lambda x : x ** 2, error_vector)
         total_squared_error = sum(sum(row) for row in square_error_vector)
-        self.output = output
-        self.expected_output = expected_output
-        return total_squared_error/len(output)
+
+        self.Yhat = Yhat
+        self.Y = Y
+
+        return total_squared_error/num_elts
     
     def backward(self):
         num_dims = len(self.output)
@@ -28,34 +40,35 @@ class MSE:
     
 class LogLinear:
     def __init__(self):
-        self.output = None
-        self.expected_output = None
+        self.Y = None
+        self.Yhat = None
 
-    def loss(self, output, expected_output):
-        assert dims(output) == dims(expected_output)
-        for row in expected_output:
+    def loss(self, Yhat, Y):
+        assert dims(Yhat) == dims(Y)
+        for row in Y:
             for col in row:
                 assert col == 1 or col == 0
 
-        num_dims = len(output)
+        num_datapoints = len(Yhat)
         # y * log(p)
-        y_logp = element_multiply_vector(expected_output, apply_func_matrix(lambda x: log(x), output))
+        y_logp = element_multiply_vector(Y, apply_func_matrix(lambda x: log(x), Yhat))
         # (1-y) * log(1-p)
-        ones = create_vector([1] * num_dims)
-        one_minus_y = matrix_add(ones, scale_matrix(-1, expected_output))
-        one_minus_p = matrix_add(ones, scale_matrix(-1, output))
+        ones = create_matrix(num_datapoints, 1, val=1)
+        one_minus_y = matrix_add(ones, scale_matrix(-1, Y))
+        one_minus_p = matrix_add(ones, scale_matrix(-1, Yhat))
         eps = 1e-12
-        safe_output_one_minus_p = apply_func_matrix(lambda x: min(max(x, eps), 1 - eps), one_minus_p)
-        one_minus_y__log_one_minus_p = element_multiply_vector(one_minus_y, apply_func_matrix(lambda x: log(x), safe_output_one_minus_p))
+        safe_Yhat_one_minus_p = apply_func_matrix(lambda x: min(max(x, eps), 1 - eps), one_minus_p)
+        one_minus_y__log_one_minus_p = element_multiply_vector(one_minus_y, apply_func_matrix(lambda x: log(x), safe_Yhat_one_minus_p))
         
         # total loss
         added_together = matrix_add(y_logp, one_minus_y__log_one_minus_p)
         negated = scale_matrix(-1, added_together)
         total_error = sum(sum(row) for row in negated)
 
-        self.output = output
-        self.expected_output = expected_output
-        return total_error / num_dims
+        self.Y = Y
+        self.Yhat = Yhat
+        
+        return total_error / num_datapoints
 
     def backward(self): # (p - y) / (p * (1-p))
         num_dims = len(self.expected_output)
