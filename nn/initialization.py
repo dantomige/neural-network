@@ -3,8 +3,6 @@ import random
 import math
 
 class Initializations:
-    def __init__(self):
-        pass
 
     def init_weights(self, input_dim, output_dim):
         return [[self.generate_weight(input_dim, output_dim) for _ in range(output_dim)] for _ in range(input_dim)]
@@ -13,9 +11,6 @@ class Initializations:
         raise NotImplementedError
 
 class HeKaiming(Initializations):
-
-    def __init__(self):
-        pass
 
     def generate_weight(self, input_dim, output_dim):
         mean = 0
