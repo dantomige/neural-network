@@ -1,6 +1,7 @@
 from utils import create_vector, transpose, matrix_add, scale_matrix, matrix_multiply, element_multiply_matrix, element_multiply_vector, apply_func_matrix, dims
 from functions import sigmoid, sigmoid_deriv
 from initialization import Initializations, HeKaiming, RandomNormal, RandomUniform
+from optimizer import Optimizer, SGD, Adam, RMSProp
 import random
 import math
 
@@ -20,11 +21,12 @@ class Layer:
     def init_params(self, init: Initializations=None):
         pass
 
-    def update_params(self, learning_rate):
+    def update_params(self, optimizer):
         pass
 
     def __str__(self):
         raise NotImplementedError
+    
 class FullyConnected(Layer):
 
     def __init__(self, input_dim, output_dim, init=HeKaiming()):
@@ -49,8 +51,8 @@ class FullyConnected(Layer):
         self.weights = self.init.init_weights(self.input_dim, self.output_dim)
         self.biases = [[0] for _ in range(self.output_dim)]
 
-    def backward(self, pL_pOut, weight_decay):
-        pOut_pW = matrix_add(transpose([[val for row in self.input for val in row] for _ in range(self.output_dim)]), scale_matrix(2 * weight_decay, self.weights))
+    def backward(self, pL_pOut):
+        pOut_pW = matrix_add(transpose([[val for row in self.input for val in row] for _ in range(self.output_dim)]), self.weights)
         pOut_pB = create_vector([1] * self.output_dim)
         pOut_pIn = self.weights
         self.pL_pW = element_multiply_matrix(pOut_pW, pL_pOut)
@@ -58,12 +60,9 @@ class FullyConnected(Layer):
         self.pL_pIn = matrix_multiply(pOut_pIn, pL_pOut)
         return self.pL_pIn
 
-    def update_params(self, learning_rate):
-        negative_weights_gradient = scale_matrix(-1, self.pL_pW)
-        self.weights = matrix_add(self.weights, scale_matrix(learning_rate, negative_weights_gradient))
-
-        negative_biases_gradient = scale_matrix(-1, self.pL_pB)
-        self.biases = matrix_add(self.biases, scale_matrix(learning_rate, negative_biases_gradient))
+    def update_params(self, optimizer: Optimizer):
+        optimizer.step(self.weights, self.pL_pW)
+        optimizer.step(self.biases, self.pL_pB)
 
     def __str__(self):
         if self.weights is None or self.biases is None:
@@ -125,6 +124,27 @@ class Dropout(Layer):
     def __str__(self):
         return f"Dropout(prob={self.dropout_prob})\n"
 
+class LayerNorm(Layer):
+
+    def __init__(self, epsilon=0.1):
+        super().__init__()
+        self.epsilon = epsilon
+
+    def forward(self, input, training=True):
+        self.input = input
+        num_dims = len(input)
+        mean = sum(sum(row) for row in input)/num_dims
+        squared_error = apply_func_matrix(lambda x: (x - mean)**2)
+        var = sum(sum(row) for row in squared_error)/num_dims
+        output = apply_func_matrix(lambda x: (x - mean)/(var + self.epsilon)**(1/2))
+        return output
+
+    def backward(self, pL_pOut):
+        raise NotImplementedError
+
+    def __str__(self):
+        return "LayerNorm()"
+
 class ReLU(Layer):
 
     def __init__(self):
@@ -141,6 +161,9 @@ class ReLU(Layer):
 
     def __str__(self):
         return "ReLU()\n"
+    
+class Tanh(Layer):
+    pass
     
 class Sigmoid(Layer):
 
@@ -160,3 +183,5 @@ class Sigmoid(Layer):
     def __str__(self):
         return "Sigmoid()\n"
 
+class Softmax():
+    pass
