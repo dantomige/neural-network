@@ -5,7 +5,7 @@ class Optimizer:
     def __init__(self):
         raise NotImplementedError
 
-    def step(self, params):
+    def step(self, params, grad):
         raise NotImplementedError
     
     @staticmethod

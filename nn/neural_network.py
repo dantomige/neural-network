@@ -1,6 +1,7 @@
 from loss_functions import LossFunction, MSE, LogLinear
 from layers import Layer, FullyConnected, Dropout, ReLU, Sigmoid
 from initialization import Initializations, RandomNormal, RandomUniform
+from optimizer import Optimizer, SGD, Adam, RMSProp
 from utils import create_vector, dims
 import random
 import copy
@@ -22,30 +23,27 @@ class NeuralNetwork:
             input = output
         return output
     
-    def backward(self, input, model_output, expected_output, loss_function, weight_decay): 
+    def backward(self, input, model_output, expected_output, loss_function): 
         
         _ = loss_function.loss(model_output, expected_output)
         pL_pOut = loss_function.backward()
 
         for layer in reversed(self.layers):
-            if layer.is_trainable:
-                pL_pIn = layer.backward(pL_pOut, weight_decay)
-            else:
-                pL_pIn = layer.backward(pL_pOut)
+            pL_pIn = layer.backward(pL_pOut)
             pL_pOut = pL_pIn
 
-    def update_parameters(self, learning_rate):
+    def update_params(self, optimizer):
         for layer in self.layers:
-            layer.update_params(learning_rate)
+            layer.update_params(optimizer)
 
-    def train(self, inputs, outputs, learning_rate: int, loss_function: LossFunction, weight_decay=0):
+    def train(self, inputs, outputs, loss_function: LossFunction, optimizer: Optimizer):
 
         # print(inputs[0], outputs[0])
         
         for input, output in zip(inputs, outputs):
             model_output = self.forward(input)
-            self.backward(input, model_output, output, loss_function, weight_decay)
-            self.update_parameters(learning_rate)
+            self.backward(input, model_output, output, loss_function)
+            self.update_params(optimizer)
 
     def evaluate(self, inputs, outputs, loss_function: LossFunction):
         assert len(inputs) == len(outputs)
