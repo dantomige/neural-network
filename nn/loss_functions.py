@@ -15,7 +15,7 @@ class LossFunction:
         raise NotImplementedError
 
 
-class MSE:
+class MSE(LossFunction):
     def __init__(self):
         super().__init__()
 
@@ -41,7 +41,7 @@ class MSE:
         pL_pIn = scale_matrix(2/dims_per_Y, error_vector)
         return pL_pIn
 
-class LogLinear:
+class LogLinear(LossFunction):
     def __init__(self):
         super().__init__()
 
@@ -86,5 +86,5 @@ class LogLinear:
         pL_pIn = scale_matrix(1/num_elts, frac)
         return pL_pIn
     
-class CrossEntropyLoss:
+class CrossEntropyLoss(LossFunction):
     pass
