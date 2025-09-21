@@ -2,7 +2,7 @@ from enum import Enum
 import random
 import math
 
-class Initializations:
+class Initialization:
 
     def init_weights(self, input_dim, output_dim):
         return [[self.generate_weight(input_dim) for _ in range(input_dim)] for _ in range(output_dim)]
@@ -10,14 +10,14 @@ class Initializations:
     def generate_weight(self):
         raise NotImplementedError
 
-class HeKaiming(Initializations):
+class HeKaiming(Initialization):
 
     def generate_weight(self, input_dim):
         mean = 0
         std = math.sqrt(2/input_dim)
         return random.gauss(mean, std)
 
-class RandomUniform(Initializations):
+class RandomUniform(Initialization):
 
     def __init__(self, low, high):
         self.low = low
@@ -26,7 +26,7 @@ class RandomUniform(Initializations):
     def generate_weight(self, input_dim=None):
         return random.uniform(self.low, self.high)
 
-class RandomNormal(Initializations):
+class RandomNormal(Initialization):
 
     def __init__(self, mean, std):
         self.mean = mean

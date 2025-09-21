@@ -1,4 +1,4 @@
-from utils import dims, apply_func_matrix, matrix_add, scale_matrix
+from .utils import dims, apply_func_matrix, matrix_add, scale_matrix
 
 class Metrics:
     

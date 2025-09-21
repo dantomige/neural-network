@@ -1,4 +1,4 @@
-from utils import create_matrix, matrix_add, scale_matrix, apply_func_matrix, apply_func_between_matrix_elementwise, dims
+from .utils import create_matrix, matrix_add, scale_matrix, apply_func_matrix, apply_func_between_matrix_elementwise, dims
 
 class Optimizer:
     

@@ -16,6 +16,15 @@ def create_matrix(row_dim, col_dim, val=0):
 def transpose(matrix):
     return [list(row) for row in zip(*matrix)]
 
+def create_diag_matrix(values: list[int]):
+    N = len(values)
+    matrix = create_matrix(N, N, 0)
+
+    for i in range(N):
+        matrix[i][i] = values[i]
+
+    return matrix
+
 def scale_matrix(mag, A):
     return [[mag * val for val in row] for row in A]
 

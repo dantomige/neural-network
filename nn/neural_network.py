@@ -1,9 +1,9 @@
-from loss_functions import LossFunction, MSE, LogLinear
-from layers import Layer, FullyConnected, Dropout, ReLU, Sigmoid
-from initialization import Initializations, RandomNormal, RandomUniform
-from optimizer import Optimizer, SGD, Adam, RMSProp
-from metrics import Metrics
-from utils import create_vector, dims
+from .loss_functions import LossFunction, MSE, LogLinear
+from .layers import Layer, FullyConnected, Dropout, ReLU, Sigmoid
+from .initialization import Initialization, RandomNormal, RandomUniform
+from .optimizer import Optimizer, SGD, Adam, RMSProp
+from .metrics import Metrics
+from .utils import create_vector, dims
 import random
 import copy
 

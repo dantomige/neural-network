@@ -1,5 +1,5 @@
-from utils import apply_func_matrix, element_multiply_vector, matrix_add, scale_matrix, dims, create_matrix, apply_func_between_matrix_elementwise
-from functions import log
+from .utils import apply_func_matrix, element_multiply_vector, matrix_add, scale_matrix, dims, create_matrix, apply_func_between_matrix_elementwise
+from .functions import log
 
 class LossFunction:
     def __init__(self):

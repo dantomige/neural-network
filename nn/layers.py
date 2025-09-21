@@ -1,7 +1,7 @@
-from utils import create_vector, create_matrix, transpose, matrix_add, scale_matrix, matrix_multiply, element_multiply_matrix, element_multiply_vector, broadcast, apply_func_matrix, dims, identity, apply_func_between_matrix_elementwise
-from functions import sigmoid, sigmoid_deriv
-from initialization import Initializations, HeKaiming, RandomNormal, RandomUniform
-from optimizer import Optimizer, SGD, Adam, RMSProp
+from .utils import create_vector, create_matrix, transpose, matrix_add, scale_matrix, matrix_multiply, element_multiply_matrix, element_multiply_vector, broadcast, apply_func_matrix, dims, identity, apply_func_between_matrix_elementwise, create_diag_matrix
+from .functions import sigmoid, sigmoid_deriv, tanh, tanh_deriv
+from .initialization import Initialization, HeKaiming, RandomNormal, RandomUniform
+from .optimizer import Optimizer, SGD, Adam, RMSProp
 import random
 import math
 
@@ -18,7 +18,7 @@ class Layer:
     def backward(self, pL_pOut):
         raise NotImplementedError
     
-    def init_params(self, init: Initializations=None):
+    def init_params(self, init: Initialization=None):
         pass
 
     def update_params(self, optimizer):
@@ -128,6 +128,48 @@ class Dropout(Layer):
 
 class LayerNorm(Layer):
 
+    def __init__(self, dim, epsilon=0.1, init=RandomNormal(0, 0.1)):
+        super().__init__()
+        self.epsilon = epsilon
+        self.dim = dim
+        self.scale_param = None
+        self.shift_param = None
+
+    def forward(self, X, training=True):
+        self.inputs = X
+        output = []
+
+        for input in self.inputs:
+
+            mean = sum(input)
+            total_squared_error = sum((val - mean)**2 for val in input)
+            std = (total_squared_error + self.epsilon) ** (1/2)
+
+            normalized_input = [(val - mean)/std for val in input]
+            scaled_input = []
+            output.append(input)
+            squared_error = apply_func_matrix(lambda x: (x - mean)/std, input)
+            std = apply_func_matrix(lambda x: (x + self.epsilon)**(1/2), squared_error)
+        
+        num_dims = len(X)
+        mean = sum(sum(row) for row in X)/num_dims
+        squared_error = apply_func_matrix(lambda x: (x - mean)**2)
+        var = sum(sum(row) for row in squared_error)/num_dims
+        output = apply_func_matrix(lambda x: (x - mean)/(var + self.epsilon)**(1/2))
+        return output
+    
+    def init_params(self):
+        self.scale_param = create_matrix(1, self.dim, 1)
+        self.shift_param = create_matrix(1, self.dim, 0)
+
+    def backward(self, pL_pOut):
+        raise NotImplementedError
+
+    def __str__(self):
+        return "LayerNorm()"
+    
+class BatchNorm(Layer):
+
     def __init__(self, epsilon=0.1):
         super().__init__()
         self.epsilon = epsilon
@@ -145,7 +187,7 @@ class LayerNorm(Layer):
         raise NotImplementedError
 
     def __str__(self):
-        return "LayerNorm()"
+        return "BatchNorm()"
 
 class ReLU(Layer):
 
@@ -166,7 +208,23 @@ class ReLU(Layer):
         return "ReLU()\n"
     
 class Tanh(Layer):
-    pass
+
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, X, training=True):
+        self.inputs = X
+        self.outputs = [[tanh(x) for x in row] for row in X]
+        return self.outputs
+
+    def backward(self, pL_pOut):
+        pOut_pIn = apply_func_matrix(lambda y: 1 - y ** 2, self.outputs)
+        mult = lambda a, b: a * b
+        self.pL_pIn = apply_func_between_matrix_elementwise(mult, pOut_pIn, pL_pOut)
+        return self.pL_pIn
+
+    def __str__(self):
+        return "Tanh()\n"
     
 class Sigmoid(Layer):
 
@@ -188,4 +246,29 @@ class Sigmoid(Layer):
         return "Sigmoid()\n"
 
 class Softmax():
-    pass
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, X, training=True):
+        self.inputs = X
+        outputs = []
+        for row in X:
+            denom = sum(math.exp(val) for val in row)
+            new_row = [math.exp(val)/denom for val in row]
+            outputs.append(new_row)
+        self.outputs = outputs
+        return outputs
+
+    def backward(self, pL_pOut):
+        self.pL_pIn = []
+        for output, pL_pOut_for_input in zip(self.outputs, pL_pOut):
+            diag_softmax = create_diag_matrix(output)
+            output = [output]
+            pL_pOut_for_input = [pL_pOut_for_input]
+            outer_product = matrix_multiply(transpose(output), output)
+            pOut_pIn_for_input = apply_func_between_matrix_elementwise(lambda x, y: x - y, diag_softmax, outer_product)
+            self.pL_pIn.append(matrix_multiply(pL_pOut_for_input, pOut_pIn_for_input)[0]) # append just the inner list as 1 X N
+        return self.pL_pIn
+
+    def __str__(self):
+        return "Softmax()\n"

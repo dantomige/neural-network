@@ -10,3 +10,9 @@ def sigmoid_deriv(x):
 
 def log(x):
     return math.log(x)
+
+def tanh(x):
+    return math.tanh(x)
+
+def tanh_deriv(x):
+    return 1 - tanh(x) ** 2
