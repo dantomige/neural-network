@@ -5,6 +5,7 @@ Summary: A neural network built from scratch
 Requires-Python: >=3.13
 Description-Content-Type: text/markdown
 Requires-Dist: matplotlib>=3.10.6
+Requires-Dist: pandas>=2.3.2
 Requires-Dist: scikit-learn>=1.7.2
 
 # neural-network

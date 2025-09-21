@@ -1,9 +1,6 @@
 README.md
 pyproject.toml
 demos/demo.py
-demos/housing_price_regression.py
-demos/make_moons.py
-demos/wine.py
 neural_network.egg-info/PKG-INFO
 neural_network.egg-info/SOURCES.txt
 neural_network.egg-info/dependency_links.txt
