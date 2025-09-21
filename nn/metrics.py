@@ -61,14 +61,8 @@ class F1(Metrics):
         recall = TP/(TP + FN)
         return 2/(1/precision + 1/recall)
 
-class AUC_ROC(Metrics):
-    def evaluate(self, Y, Yhat):
-        Ypred = self.pred(Yhat)
-        TP, TN, FP, FN = self.confusion_matrix(Y, Ypred)
-        return (TP + TN)/(TP + TN + FP + FN)
-
 # regression
-class MSE(Metrics):
+class MSEMetric(Metrics):
     def evaluate(self, Y, Yhat):
         assert dims(Yhat) == dims(Y)
 
@@ -84,7 +78,7 @@ class MSE(Metrics):
 
         return total_squared_error/num_elts
 
-class MAE(Metrics):
+class MAEMetric(Metrics):
     def evaluate(self, Y, Yhat):
         assert dims(Yhat) == dims(Y)
 
