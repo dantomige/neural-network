@@ -37,26 +37,23 @@ class NeuralNetwork:
         for layer in self.layers:
             layer.update_params(optimizer)
 
-    def train(self, inputs, outputs, loss_function: LossFunction, optimizer: Optimizer):
+    def train(self, X, Y, loss_function: LossFunction, optimizer: Optimizer):
         
-        for input, output in zip(inputs, outputs):
-            model_output = self.forward(input)
-            self.backward(input, model_output, output, loss_function)
-            self.update_params(optimizer)
+        Yhat = self.forward(X)
+        self.backward(X, Y, Yhat, loss_function)
+        self.update_params(optimizer)
 
-    def evaluate(self, inputs, outputs, metric: Metrics):
-        assert len(inputs) == len(outputs)
+    def evaluate(self, X, Y, metric: Metrics):
+        assert len(X) == len(Y)
 
-        total_loss = 0
-        num_datapoints = len(inputs)
-
-        for input, output in zip(inputs, outputs):
-            model_output = self.forward(input, training=False)
-            datapoint_loss = metric.loss(model_output, output)
-            total_loss += datapoint_loss
+        Yhat = self.forward(X, training=False)
+        output = metric.evaluate(Y, Yhat)
         
-        return total_loss/num_datapoints
+        return output
     
+    def __call__(self, X):
+        return self.forward(X, training=False)
+
     def __str__(self):     
         output = ""
         for layer in self.layers:

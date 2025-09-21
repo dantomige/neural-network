@@ -11,8 +11,10 @@ class Optimizer:
     @staticmethod
     def update(old_param, new_param):
         """Updates old parameters with new parameters in place"""
-        for i in range(len(old_param)):
-            old_param[i] = new_param[i]
+        num_rows, num_cols = dims(old_param)
+        for i in range(num_rows):
+            for j in range(num_cols):
+                old_param[i][j] = new_param[i][j]
 
 class SGD(Optimizer): # default optimizer
     def __init__(self, learning_rate=0.01, momentum=0.0, weight_decay=0.0):
@@ -22,6 +24,7 @@ class SGD(Optimizer): # default optimizer
         self.momentum_buffer = {}
 
     def step(self, params, grad):
+        # print("grad", grad)
         # weight decay
         grad_with_weighted_params = matrix_add(grad, scale_matrix(self.weight_decay, params))
 
@@ -83,7 +86,7 @@ class Adam(Optimizer):
         self.update(params, new_params)
 
         # save moments
-        self.second_moment[id(params)] = v_tplus1
+        self.first_moment[id(params)] = v_tplus1
         self.second_moment[id(params)] = s_tplus1
 
 class RMSProp(Optimizer):
