@@ -17,17 +17,15 @@ class Metrics:
     @staticmethod
     def confusion_matrix(Y, Ypred):
         assert dims(Y) == dims(Ypred)
-
         TP = TN = FP = FN = 0
         for rowY, rowYhat in zip(Y, Ypred):
             is_true = rowY[0]
             pred = rowYhat[0]
 
-            TP += is_true and pred
-            TN += is_true and not pred
-            FP += not is_true and pred
-            FN += not is_true and not pred
-        
+            TP += int(is_true == 1 and pred == 1)
+            TN += int(is_true == 0 and pred == 0)
+            FP += int(is_true == 0 and pred == 1)
+            FN += int(is_true == 1 and pred == 0)
         return TP, TN, FP, FN
                 
 
@@ -44,22 +42,29 @@ class Precision(Metrics):
     def evaluate(self, Y, Yhat):
         Ypred = self.pred(Yhat)
         TP, TN, FP, FN = self.confusion_matrix(Y, Ypred)
-        return TP/(TP + FP)
+        return TP / (TP + FP) if (TP + FP) != 0 else 0
 
 class Recall(Metrics):
 
     def evaluate(self, Y, Yhat):
         Ypred = self.pred(Yhat)
         TP, TN, FP, FN = self.confusion_matrix(Y, Ypred)
-        return TP/(TP + FN)
+        return TP / (TP + FN) if (TP + FN) != 0 else 0
 
 class F1(Metrics):
     def evaluate(self, Y, Yhat):
         Ypred = self.pred(Yhat)
         TP, TN, FP, FN = self.confusion_matrix(Y, Ypred)
-        precision = TP/(TP + FP)
-        recall = TP/(TP + FN)
-        return 2/(1/precision + 1/recall)
+
+        # Safe precision and recall
+        precision = TP / (TP + FP) if (TP + FP) != 0 else 0
+        recall = TP / (TP + FN) if (TP + FN) != 0 else 0
+
+        # Safe F1
+        if precision + recall == 0:
+            return 0
+        f1 = 2 * (precision * recall) / (precision + recall)
+        return f1
 
 # regression
 class MSEMetric(Metrics):

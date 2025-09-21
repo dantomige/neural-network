@@ -3,7 +3,10 @@ from .functions import log
 
 class LossFunction:
     def __init__(self):
-        pass
+        self.Yhat = None
+        self.Y = None
+        self.loss_value = None
+
 
     def loss(self, output, input):
         raise NotImplementedError
@@ -14,8 +17,7 @@ class LossFunction:
 
 class MSE:
     def __init__(self):
-        self.Yhat = None
-        self.Y = None
+        super().__init__()
 
     def loss(self, Y, Yhat):
         assert dims(Yhat) == dims(Y)
@@ -29,9 +31,9 @@ class MSE:
 
         self.Yhat = Yhat
         self.Y = Y
+        self.loss_value = total_squared_error / num_elts
+        return self.loss_value
 
-        return total_squared_error/num_elts
-    
     def backward(self):
         _, dims_per_Y = dims(self.Y)
 
@@ -41,22 +43,24 @@ class MSE:
 
 class LogLinear:
     def __init__(self):
-        self.Y = None
-        self.Yhat = None
+        super().__init__()
 
-    def loss(self, Yhat, Y):
+    def loss(self, Y, Yhat):
         assert dims(Yhat) == dims(Y)
         for row in Y:
             for col in row:
-                assert col == 1 or col == 0
+                assert col == 1 or col == 0, f"Y should be binary (0 or 1): {col}"
+
+        self.Y = Y
+        self.Yhat = Yhat
 
         num_datapoints = len(Yhat)
         # y * log(p)
-        y_logp = apply_func_between_matrix_elementwise(lambda a,b: a*b, apply_func_matrix(lambda x: log(x), Yhat))
+        y_logp = apply_func_between_matrix_elementwise(lambda a,b: a*b, self.Y, apply_func_matrix(lambda x: log(x), self.Yhat))
         # (1-y) * log(1-p)
         ones = create_matrix(*dims(self.Y), val=1)
-        one_minus_y = matrix_add(ones, scale_matrix(-1, Y))
-        one_minus_p = matrix_add(ones, scale_matrix(-1, Yhat))
+        one_minus_y = matrix_add(ones, scale_matrix(-1, self.Y))
+        one_minus_p = matrix_add(ones, scale_matrix(-1, self.Yhat))
         eps = 1e-12
         safe_Yhat_one_minus_p = apply_func_matrix(lambda x: min(max(x, eps), 1 - eps), one_minus_p)
         one_minus_y__log_one_minus_p = apply_func_between_matrix_elementwise(lambda a,b: a*b, one_minus_y, apply_func_matrix(lambda x: log(x), safe_Yhat_one_minus_p))
@@ -66,10 +70,8 @@ class LogLinear:
         negated = scale_matrix(-1, added_together)
         total_error = sum(sum(row) for row in negated)
 
-        self.Y = Y
-        self.Yhat = Yhat
-        
-        return total_error / num_datapoints
+        self.loss_value = total_error / num_datapoints
+        return self.loss_value
 
     def backward(self): # (p - y) / (p * (1-p))
         M, N = dims(self.Y)
