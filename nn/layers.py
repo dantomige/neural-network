@@ -74,7 +74,7 @@ class FullyConnected(Layer):
         col_width = 10  # space for each number
 
         output = ""
-
+        
         # Weight rows
         for i in range(num_col):
             output += "       ".ljust(col_width) if i else "Weights".ljust(col_width)
@@ -245,7 +245,7 @@ class Sigmoid(Layer):
     def __str__(self):
         return "Sigmoid()\n"
 
-class Softmax():
+class Softmax(Layer):
     def __init__(self):
         super().__init__()
 
