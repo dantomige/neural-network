@@ -35,10 +35,11 @@ class MSE(LossFunction):
         return self.loss_value
 
     def backward(self):
-        _, dims_per_Y = dims(self.Y)
+        N, dims_per_Y = dims(self.Y)
+        num_elts = N * dims_per_Y
 
         error_vector = matrix_add(self.Yhat, scale_matrix(-1, self.Y))
-        pL_pIn = scale_matrix(2/dims_per_Y, error_vector)
+        pL_pIn = scale_matrix(2/num_elts, error_vector)
         return pL_pIn
 
 class LogLinear(LossFunction):

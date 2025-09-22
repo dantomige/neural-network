@@ -54,8 +54,8 @@ class FullyConnected(Layer):
     def backward(self, pL_pOut):
         N = len(self.inputs)
 
-        self.pL_pW = scale_matrix(1/N, matrix_multiply(transpose(pL_pOut), self.inputs))
-        self.pL_pB = scale_matrix(1/N, [[sum(row) for row in transpose(pL_pOut)]])
+        self.pL_pW = matrix_multiply(transpose(pL_pOut), self.inputs)
+        self.pL_pB = [[sum(row) for row in transpose(pL_pOut)]]
         self.pL_pIn = matrix_multiply(pL_pOut, self.weights)
 
         return self.pL_pIn

@@ -30,7 +30,7 @@ def test_mse_backward():
     Yhat = [[1, 3], [2, 5]]
     mse.loss(Y, Yhat)
     grad = mse.backward()
-    expected_grad = [[0, 1], [-1, 1]]  # 2/2 per formula
+    expected_grad = [[0, 0.5], [-0.5, 0.5]]  # 2/2 per formula
     assert matrices_close(grad, expected_grad, tol=1e-6)
 
 # ---------------------------

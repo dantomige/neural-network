@@ -47,10 +47,14 @@ def test_fully_connected_forward_backward():
             fc.weights[i][j] = orig - EPS
             minus = fc.forward(X_fc)
             fc.weights[i][j] = orig
-            N = len(X_fc)
-            numerical_grad[i][j] = sum((plus[r][c] - minus[r][c]) * pL_pOut[r][c] for r in range(2) for c in range(2)) / (2 * EPS * N)
+            # no division by N anymore
+            numerical_grad[i][j] = sum(
+                (plus[r][c] - minus[r][c]) * pL_pOut[r][c]
+                for r in range(2) for c in range(2)
+            ) / (2 * EPS)
 
     assert matrices_close(fc.pL_pW, numerical_grad, tol=1e-4), "Weight gradient check failed"
+
 
 # ---------------------------
 # ReLU Tests
