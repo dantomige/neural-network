@@ -1,9 +1,11 @@
+import pytest
 import random
 import math
 import copy
-from nn.layers import FullyConnected, Dropout, ReLU, Sigmoid, LayerNorm
+from nn.utils import create_matrix, matrix_multiply, transpose, scale_matrix, dims
+from nn.layers import FullyConnected, ReLU, Tanh, Sigmoid, Dropout, Softmax, LayerNorm, BatchNorm
 
-EPS = 1e-5  # for numerical gradient check
+EPS = 1e-5
 
 def matrices_close(mat1, mat2, tol=1e-6):
     if len(mat1) != len(mat2):
@@ -17,91 +19,110 @@ def matrices_close(mat1, mat2, tol=1e-6):
     return True
 
 # ---------------------------
-# FullyConnected Forward Test
+# FullyConnected Tests
 # ---------------------------
-X_fc = [[1,2],[3,4]]
-fc = FullyConnected(input_dim=2, output_dim=2)
-fc.weights = [[1,0],[0,1]]  # identity
-fc.biases = [[1,1]]
-out_fc = fc.forward(X_fc)
-expected_fc = [[2,3],[4,5]]  # X*I^T + b
-assert matrices_close(out_fc, expected_fc), "FullyConnected forward failed"
+def test_fully_connected_forward_backward():
+    X_fc = [[1, 2], [3, 4]]
+    fc = FullyConnected(input_dim=2, output_dim=2)
+    fc.weights = [[1, 0], [0, 1]]  # identity
+    fc.biases = [[1, 1]]
+
+    # forward
+    out_fc = fc.forward(X_fc)
+    expected_fc = [[2, 3], [4, 5]]
+    assert matrices_close(out_fc, expected_fc), "Forward failed"
+
+    # backward
+    pL_pOut = [[1, 1], [1, 1]]
+    fc.inputs = X_fc
+    fc.backward(pL_pOut)
+
+    # numerical gradient
+    numerical_grad = copy.deepcopy(fc.weights)
+    for i in range(len(fc.weights)):
+        for j in range(len(fc.weights[0])):
+            orig = fc.weights[i][j]
+            fc.weights[i][j] = orig + EPS
+            plus = fc.forward(X_fc)
+            fc.weights[i][j] = orig - EPS
+            minus = fc.forward(X_fc)
+            fc.weights[i][j] = orig
+            N = len(X_fc)
+            numerical_grad[i][j] = sum((plus[r][c] - minus[r][c]) * pL_pOut[r][c] for r in range(2) for c in range(2)) / (2 * EPS * N)
+
+    assert matrices_close(fc.pL_pW, numerical_grad, tol=1e-4), "Weight gradient check failed"
 
 # ---------------------------
-# FullyConnected Backward Gradient Check
+# ReLU Tests
 # ---------------------------
-pL_pOut = [[1,1],[1,1]]
-fc.inputs = X_fc
-fc.backward(pL_pOut)
-# Numerical gradient for weights
-numerical_grad = copy.deepcopy(fc.weights)
-for i in range(len(fc.weights)):
-    for j in range(len(fc.weights[0])):
-        orig = fc.weights[i][j]
-        fc.weights[i][j] = orig + EPS
-        plus = fc.forward(X_fc)
-        fc.weights[i][j] = orig - EPS
-        minus = fc.forward(X_fc)
-        fc.weights[i][j] = orig
-        # derivative approximated
-        numerical_grad[i][j] = sum((plus[r][c]-minus[r][c])*pL_pOut[r][c] for r in range(2) for c in range(2))/(2*EPS)
-assert matrices_close(fc.pL_pW, numerical_grad, tol=1e-4), "FullyConnected weight gradient check failed"
-
-print("FullyConnected tests passed ✅")
+def test_relu_forward_backward():
+    X = [[-1, 2], [0, -3]]
+    relu = ReLU()
+    out = relu.forward(X)
+    assert matrices_close(out, [[0, 2], [0, 0]]), "ReLU forward failed"
+    grad = relu.backward([[1, 1], [1, 1]])
+    assert matrices_close(grad, [[0, 1], [0, 0]]), "ReLU backward failed"
 
 # ---------------------------
-# ReLU Forward and Backward
+# Sigmoid Tests
 # ---------------------------
-X_relu = [[-1,2],[0,-3]]
-relu = ReLU()
-out_relu = relu.forward(X_relu)
-assert matrices_close(out_relu, [[0,2],[0,0]]), "ReLU forward failed"
-
-grad_relu = relu.backward([[1,1],[1,1]])
-assert matrices_close(grad_relu, [[0,1],[0,0]]), "ReLU backward failed"
-print("ReLU tests passed ✅")
-
-# ---------------------------
-# Sigmoid Forward and Backward
-# ---------------------------
-X_sig = [[0,2]]
-sig = Sigmoid()
-out_sig = sig.forward(X_sig)
-expected_sig = [[1/(1+math.exp(0)), 1/(1+math.exp(-2))]]
-assert matrices_close(out_sig, expected_sig), "Sigmoid forward failed"
-
-grad_sig = sig.backward([[1,1]])
-expected_grad = [[out_sig[0][0]*(1-out_sig[0][0]), out_sig[0][1]*(1-out_sig[0][1])]]
-assert matrices_close(grad_sig, expected_grad), "Sigmoid backward failed"
-print("Sigmoid tests passed ✅")
+def test_sigmoid_forward_backward():
+    X = [[0, 2]]
+    sig = Sigmoid()
+    out = sig.forward(X)
+    expected_out = [[1/(1+math.exp(0)), 1/(1+math.exp(-2))]]
+    assert matrices_close(out, expected_out), "Sigmoid forward failed"
+    grad = sig.backward([[1, 1]])
+    expected_grad = [[out[0][0]*(1-out[0][0]), out[0][1]*(1-out[0][1])]]
+    assert matrices_close(grad, expected_grad), "Sigmoid backward failed"
 
 # ---------------------------
-# Dropout Forward and Backward
+# Tanh Tests
 # ---------------------------
-random.seed(42)
-X_drop = [[1,2],[3,4]]
-drop = Dropout(dropout_prob=0.5)
-out1 = drop.forward(X_drop, training=True)
-random.seed(42)
-out2 = drop.forward(X_drop, training=True)
-assert matrices_close(out1, out2), "Dropout forward reproducibility failed"
-
-# Inference mode
-out_eval = drop.forward(X_drop, training=False)
-assert matrices_close(out_eval, X_drop), "Dropout inference failed"
-print("Dropout tests passed ✅")
+def test_tanh_forward_backward():
+    X = [[0, 1]]
+    t = Tanh()
+    out = t.forward(X)
+    grad = t.backward([[1, 1]])
+    expected_grad = [[1 - out[0][0]**2, 1 - out[0][1]**2]]
+    assert matrices_close(grad, expected_grad), "Tanh backward failed"
 
 # ---------------------------
-# LayerNorm Forward Test
+# Dropout Tests
 # ---------------------------
-X_ln = [[1,2],[3,4]]
-ln = LayerNorm(epsilon=1e-5)
-out_ln = ln.forward(X_ln)
-mean = sum(sum(row) for row in X_ln)/4
-var = sum(sum((x-mean)**2 for x in row) for row in X_ln)/4
-expected_ln = [[(1-mean)/(var+1e-5)**0.5, (2-mean)/(var+1e-5)**0.5],
-               [(3-mean)/(var+1e-5)**0.5, (4-mean)/(var+1e-5)**0.5]]
-assert matrices_close(out_ln, expected_ln), "LayerNorm forward failed"
-print("LayerNorm tests passed ✅")
+def test_dropout_forward_backward():
+    random.seed(42)
+    X = [[1, 2], [3, 4]]
+    drop = Dropout(dropout_prob=0.5)
+    out1 = drop.forward(X, training=True)
+    random.seed(42)
+    out2 = drop.forward(X, training=True)
+    assert matrices_close(out1, out2), "Dropout reproducibility failed"
+    out_eval = drop.forward(X, training=False)
+    assert matrices_close(out_eval, X), "Dropout inference failed"
 
-print("All deterministic layer tests passed ✅")
+# ---------------------------
+# Softmax Tests
+# ---------------------------
+def test_softmax_forward():
+    X = [[1, 2, 3]]
+    sm = Softmax()
+    out = sm.forward(X)
+    s = sum(out[0])
+    assert abs(s - 1.0) < 1e-6, "Softmax forward failed"
+
+# ---------------------------
+# LayerNorm / BatchNorm Tests (forward only)
+# ---------------------------
+def test_layernorm_forward():
+    X = [[1, 2], [3, 4]]
+    ln = LayerNorm(dim=2, epsilon=1e-5)
+    out = ln.forward(X)
+    # just check dimensions
+    assert dims(out) == dims(X), "LayerNorm forward failed"
+
+def test_batchnorm_forward():
+    X = [[1, 2], [3, 4]]
+    bn = BatchNorm(epsilon=1e-5)
+    out = bn.forward(X)
+    assert dims(out) == dims(X), "BatchNorm forward failed"

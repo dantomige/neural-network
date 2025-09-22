@@ -74,7 +74,7 @@ class FullyConnected(Layer):
         col_width = 10  # space for each number
 
         output = ""
-        
+
         # Weight rows
         for i in range(num_col):
             output += "       ".ljust(col_width) if i else "Weights".ljust(col_width)
@@ -156,7 +156,7 @@ class LayerNorm(Layer):
         squared_error = apply_func_matrix(lambda x: (x - mean)**2)
         var = sum(sum(row) for row in squared_error)/num_dims
         output = apply_func_matrix(lambda x: (x - mean)/(var + self.epsilon)**(1/2))
-        return output
+        raise NotImplementedError
     
     def init_params(self):
         self.scale_param = create_matrix(1, self.dim, 1)
@@ -180,8 +180,8 @@ class BatchNorm(Layer):
         mean = sum(sum(row) for row in X)/num_dims
         squared_error = apply_func_matrix(lambda x: (x - mean)**2)
         var = sum(sum(row) for row in squared_error)/num_dims
-        output = apply_func_matrix(lambda x: (x - mean)/(var + self.epsilon)**(1/2))
-        return output
+        output = apply_func_matrix(lambda x: (x - mean)/(var + self.epsilon)**(1/2), squared_error)
+        raise NotImplementedError
 
     def backward(self, pL_pOut):
         raise NotImplementedError

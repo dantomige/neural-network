@@ -1,7 +1,4 @@
-from neural_network import NeuralNetwork
-from layers import FullyConnected, ReLU
-from loss_functions import MSE
-from optimizer import SGD
+from nn import *
 import random
 
 random.seed(1)

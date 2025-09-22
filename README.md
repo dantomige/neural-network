@@ -54,3 +54,13 @@ Clone the repository:
 ```bash
 git clone https://github.com/yourusername/neural-network.git
 cd neural-network
+```
+
+TODOS:
+* update utils
+* check styling
+* make typing more consistent
+* update input types to take in numpy and dataframes array (keep internal logic using the same)
+* create full test suite
+* update layer and batch norm
+* 

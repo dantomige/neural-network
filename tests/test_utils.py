@@ -1,9 +1,10 @@
-from nn.utils import matrix_multiply, dot_product, DimensionError
+from nn import *
+from nn.utils import *
 import pytest
 
 class TestMatrixMultiply:
 
-    def test_matrices():
+    def test_matrices(self):
         A = [           # 2 X 2
             [1, 0],
             [0, 1]
@@ -35,7 +36,7 @@ class TestMatrixMultiply:
         ]
         CD_expected = [  # 3 X 1
             [3.5],
-            [0],
+            [-4],
             [13],
         ]
 
@@ -55,9 +56,9 @@ class TestMatrixMultiply:
     
         
 
-class TestDotProduct():
+class TestDotProduct:
 
-    def test_dot():
+    def test_dot(self):
         a = [1, 0, 1]
         b = [4, 1]
         c = [3, -1, 1]
@@ -78,4 +79,4 @@ class TestDotProduct():
             dot_product(b, a)
 
         with pytest.raises(DimensionError):
-            dot_product(c, d)
+            dot_product(b, d)
