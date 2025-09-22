@@ -215,7 +215,7 @@ wheels = [
 ]
 
 [[package]]
-name = "neural-network"
+name = "nn"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
