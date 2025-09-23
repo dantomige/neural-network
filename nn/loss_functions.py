@@ -88,4 +88,39 @@ class LogLinear(LossFunction):
         return pL_pIn
     
 class CrossEntropyLoss(LossFunction):
-    pass
+    def __init__(self):
+        super().__init__()
+
+    def loss(self, Y, Yhat):
+        assert dims(Yhat) == dims(Y)
+        self.Y = Y
+        self.Yhat = Yhat
+
+        num_datapoints, num_classes = dims(Y)
+        eps = 1e-12
+
+        # Clip predictions to avoid log(0)
+        safe_Yhat = apply_func_matrix(lambda x: min(max(x, eps), 1 - eps), Yhat)
+
+        # elementwise y * log(yhat)
+        y_logp = apply_func_between_matrix_elementwise(
+            lambda a, b: a * log(b), self.Y, safe_Yhat
+        )
+
+        # total error = -sum(y * log(yhat)) / M
+        total_error = -sum(sum(row) for row in y_logp)
+        self.loss_value = total_error / num_datapoints
+        return self.loss_value
+
+    def backward(self):
+        M, K = dims(self.Y)
+        eps = 1e-12
+
+        # Clip Yhat to avoid division by zero
+        safe_Yhat = apply_func_matrix(lambda x: max(x, eps), self.Yhat)
+
+        # gradient = -(Y / (M * Yhat))
+        grad = apply_func_between_matrix_elementwise(
+            lambda y, yhat: -y / (M * yhat), self.Y, safe_Yhat
+        )
+        return grad
