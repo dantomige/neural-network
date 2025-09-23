@@ -246,29 +246,38 @@ class Sigmoid(Layer):
         return "Sigmoid()\n"
 
 class Softmax(Layer):
-    def __init__(self):
+    def __init__(self, epsilon=1e-9):
         super().__init__()
+        self.epsilon = epsilon
 
     def forward(self, X, training=True):
         self.inputs = X
-        outputs = []
+        self.outputs = []
+
         for row in X:
-            denom = sum(math.exp(val) for val in row)
-            new_row = [math.exp(val)/denom for val in row]
-            outputs.append(new_row)
-        self.outputs = outputs
-        return outputs
+            # 1. subtract max for stability
+            max_val = max(row)
+            exps = [math.exp(val - max_val) for val in row]
+            sum_exps = sum(exps) + self.epsilon
+            softmax_row = [exp_val / sum_exps for exp_val in exps]
+            self.outputs.append(softmax_row)
+
+        return self.outputs
 
     def backward(self, pL_pOut):
         self.pL_pIn = []
-        for output, pL_pOut_for_input in zip(self.outputs, pL_pOut):
-            diag_softmax = create_diag_matrix(output)
-            output = [output]
-            pL_pOut_for_input = [pL_pOut_for_input]
-            outer_product = matrix_multiply(transpose(output), output)
-            pOut_pIn_for_input = apply_func_between_matrix_elementwise(lambda x, y: x - y, diag_softmax, outer_product)
-            self.pL_pIn.append(matrix_multiply(pL_pOut_for_input, pOut_pIn_for_input)[0]) # append just the inner list as 1 X N
-        return self.pL_pIn
 
-    def __str__(self):
-        return "Softmax()\n"
+        for output, grad_output in zip(self.outputs, pL_pOut):
+            # Create Jacobian matrix: J = diag(softmax) - softmax.T @ softmax
+            diag_softmax = create_diag_matrix(output)
+            output_vec = [output]  # 1 x N
+            outer_product = matrix_multiply(transpose(output_vec), output_vec)
+            jacobian = apply_func_between_matrix_elementwise(
+                lambda x, y: x - y, diag_softmax, outer_product
+            )
+
+            # Gradient: pL_pIn = grad_output @ jacobian
+            grad_input = matrix_multiply([grad_output], jacobian)[0]  # flatten 1 x N
+            self.pL_pIn.append(grad_input)
+
+        return self.pL_pIn
