@@ -77,7 +77,7 @@ nn = NeuralNetwork([
 ])
 ```
 
-## Getting Started
+## TODO
 - update utils
 - check styling
 - make typing more consistent
