@@ -1,6 +1,6 @@
 # Neural-Network
 
-Neural Networks from scratch in **pure Python** — no PyTorch, no TensorFlow, no NumPy. This project implements core neural network functionality from the ground up, focusing on clarity and educational value.  
+Neural Networks from scratch in **pure Python** — no PyTorch, no TensorFlow, no NumPy 😱. This project implements core neural network functionality from the ground up, focusing on clarity and educational value.  
 
 It supports **Fully Connected, Dropout, ReLU, Sigmoid, Tanh, Softmax layers**, as well as **Layer Normalization** and **Batch Normalization**.  
 
@@ -13,8 +13,7 @@ Loss functions include **MSE** and **LogLinear / Cross-Entropy**, and evaluation
 - **Layer Types**
   - Fully Connected (Dense)  
   - Dropout  
-  - ReLU, Tanh, Sigmoid, Softmax  
-  - Layer Normalization, Batch Normalization  
+  - ReLU, Tanh, Sigmoid, Softmax   
 
 - **Loss Functions**
   - Mean Squared Error (MSE)  
@@ -62,5 +61,4 @@ TODOS:
 * make typing more consistent
 * update input types to take in numpy and dataframes array (keep internal logic using the same)
 * create full test suite
-* update layer and batch norm
-* 
+* fully implement layer and batch norm
